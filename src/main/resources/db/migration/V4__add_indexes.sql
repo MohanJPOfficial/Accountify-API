@@ -1,0 +1,9 @@
+# indexes for foreign keys
+CREATE INDEX idx_business_user_id     ON business(user_id);
+CREATE INDEX idx_journal_business_id  ON journal(business_id);
+CREATE INDEX idx_ledger_business_id   ON ledger(business_id);
+CREATE INDEX idx_entry_journal_id     ON entry(journal_id);
+CREATE INDEX idx_entry_ledger_id      ON entry(ledger_id);
+CREATE INDEX idx_bill_ledger_id       ON bill(ledger_id);
+CREATE INDEX idx_bill_business_id     ON bill(business_id);
+CREATE INDEX idx_bill_entry_bill_id   ON bill_entry(bill_id);
