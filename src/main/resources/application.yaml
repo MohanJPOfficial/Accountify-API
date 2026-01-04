@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: Accountify
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/accountify?createDatabaseIfNotExist=true
+    username: root
+    password: ***REMOVED***
+
+  jpa:
+    show-sql: true
+
+websiteUrl: http://localhost:8080
