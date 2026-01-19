@@ -56,5 +56,4 @@ public class BillEntryEntity {
     @Lob
     @Column(name = "timestamp", nullable = false)
     private String timestamp;
-
 }
