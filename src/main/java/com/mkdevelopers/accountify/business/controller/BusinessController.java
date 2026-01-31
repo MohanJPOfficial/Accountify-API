@@ -3,18 +3,15 @@ package com.mkdevelopers.accountify.business.controller;
 import com.mkdevelopers.accountify.business.dto.BusinessDto;
 import com.mkdevelopers.accountify.business.dto.CreateBusinessRequest;
 import com.mkdevelopers.accountify.business.dto.UpdateBusinessRequest;
-import com.mkdevelopers.accountify.business.exception.BusinessNotFoundException;
-import com.mkdevelopers.accountify.business.exception.DuplicateBusinessException;
 import com.mkdevelopers.accountify.business.service.BusinessService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
@@ -33,9 +30,16 @@ class BusinessController {
         return ResponseEntity.created(uri).body(businessDto);
     }
 
+    @GetMapping("/{id}")
+    public BusinessDto getBusinessById(@PathVariable String id) {
+        return businessService.getBusinessById(id);
+    }
+
     @GetMapping
-    public List<BusinessDto> getAllBusinesses() {
-        return businessService.getAllBusinesses();
+    public Page<BusinessDto> getAllBusinesses(
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return businessService.getAllBusinesses(pageable);
     }
 
     @PutMapping("/{id}")
@@ -47,21 +51,8 @@ class BusinessController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteBusiness(
-            @PathVariable String id
-    ) {
+    public ResponseEntity<Void> deleteBusiness(@PathVariable String id) {
         businessService.deleteBusiness(id);
-    }
-
-    @ExceptionHandler(BusinessNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleBusinessNotFoundException(Exception e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", e.getMessage()));
-    }
-
-    @ExceptionHandler(DuplicateBusinessException.class)
-    public ResponseEntity<Map<String, String>> handleDuplicateBusiness(Exception e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
+        return ResponseEntity.noContent().build();
     }
 }

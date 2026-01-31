@@ -12,7 +12,7 @@ public record BusinessDto(
         String businessName,
         String gstNo,
         String location,
-        String timestamp
+        Long timestamp
 ) implements Serializable {
 
 }
