@@ -45,7 +45,7 @@ class BusinessController {
     @PutMapping("/{id}")
     public BusinessDto updateBusiness(
             @PathVariable String id,
-            @RequestBody UpdateBusinessRequest request
+            @Valid @RequestBody UpdateBusinessRequest request
     ) {
         return businessService.updateBusiness(id, request);
     }
