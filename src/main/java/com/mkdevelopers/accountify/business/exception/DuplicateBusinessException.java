@@ -1,6 +1,9 @@
 package com.mkdevelopers.accountify.business.exception;
 
-public class DuplicateBusinessException extends RuntimeException{
+import com.mkdevelopers.accountify.common.exception.DuplicateResourceException;
+
+public class DuplicateBusinessException extends DuplicateResourceException {
+
     public DuplicateBusinessException(String message) {
         super(message);
     }

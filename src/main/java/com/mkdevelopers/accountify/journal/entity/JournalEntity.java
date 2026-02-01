@@ -20,6 +20,9 @@ public class JournalEntity {
     @Column(name = "journal_id")
     private String journalId;
 
+    @Column(name = "journal_name")
+    private String journalName;
+
     @Column(name = "user_id")
     private String userId;
 
@@ -29,7 +32,7 @@ public class JournalEntity {
     private BusinessEntity business;
 
     @Column(name = "timestamp")
-    private String timestamp;
+    private Long timestamp;
 
     @OneToMany(mappedBy = "journal")
     private Set<EntryEntity> entries = new LinkedHashSet<>();

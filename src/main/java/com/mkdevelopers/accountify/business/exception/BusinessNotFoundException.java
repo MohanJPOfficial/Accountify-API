@@ -1,9 +1,10 @@
 package com.mkdevelopers.accountify.business.exception;
 
-public class BusinessNotFoundException extends RuntimeException {
+import com.mkdevelopers.accountify.common.exception.ResourceNotFoundException;
+
+public class BusinessNotFoundException extends ResourceNotFoundException {
 
     public BusinessNotFoundException() {
-
     }
 
     public BusinessNotFoundException(String message) {
