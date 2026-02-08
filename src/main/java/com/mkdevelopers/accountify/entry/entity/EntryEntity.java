@@ -40,8 +40,8 @@ public class EntryEntity {
     private String particularType;
 
     @Column(name = "transaction_value")
-    private String transactionValue;
+    private Long transactionValue;
 
     @Column(name = "timestamp")
-    private String timestamp;
+    private Long timestamp;
 }
