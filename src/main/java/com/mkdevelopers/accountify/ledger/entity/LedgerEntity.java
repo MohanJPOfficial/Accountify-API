@@ -42,7 +42,7 @@ public class LedgerEntity {
     private String location;
 
     @Column(name = "timestamp")
-    private String timestamp;
+    private Long timestamp;
 
     @OneToMany(mappedBy = "ledger")
     private Set<BillEntity> bills = new LinkedHashSet<>();
