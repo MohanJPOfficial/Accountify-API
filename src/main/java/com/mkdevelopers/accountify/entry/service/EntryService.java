@@ -45,16 +45,10 @@ public class EntryService {
         if (request.getJournalId() != null) {
             var journal = journalRepository.findById(request.getJournalId())
                     .orElseThrow(() -> new JournalNotFoundException("Journal not found"));
-            if (!CURRENT_USER_ID.equals(journal.getUserId())) {
-                throw new JournalNotFoundException("Journal not found");
-            }
             entity.setJournal(journal);
         } else {
             var ledger = ledgerRepository.findById(request.getLedgerId())
                     .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
-            if (!CURRENT_USER_ID.equals(ledger.getUserId())) {
-                throw new LedgerNotFoundException("Ledger not found");
-            }
             entity.setLedger(ledger);
         }
         
@@ -65,44 +59,24 @@ public class EntryService {
     public EntryDto getEntryById(String entryId) {
         var entity = entryRepository.findById(entryId)
                 .orElseThrow(() -> new EntryNotFoundException("Entry not found"));
-        
-        if (!CURRENT_USER_ID.equals(entity.getUserId())) {
-             throw new EntryNotFoundException("Entry not found");
-        }
-        
         return entryMapper.toDto(entity);
     }
 
     public Page<EntryDto> getEntriesByJournal(String journalId, Pageable pageable) {
         var journal = journalRepository.findById(journalId)
                 .orElseThrow(() -> new JournalNotFoundException("Journal not found"));
-
-        if (!CURRENT_USER_ID.equals(journal.getUserId())) {
-             throw new JournalNotFoundException("Journal not found");
-        }
-
         return entryRepository.findByJournal(journal, pageable).map(entryMapper::toDto);
     }
 
     public Page<EntryDto> getEntriesByLedger(String ledgerId, Pageable pageable) {
         var ledger = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
-
-        if (!CURRENT_USER_ID.equals(ledger.getUserId())) {
-             throw new LedgerNotFoundException("Ledger not found");
-        }
-
         return entryRepository.findByLedger(ledger, pageable).map(entryMapper::toDto);
     }
 
     public EntryDto updateEntry(String entryId, UpdateEntryRequest request) {
         var entity = entryRepository.findById(entryId)
                 .orElseThrow(() -> new EntryNotFoundException("Entry not found"));
-
-        if (!CURRENT_USER_ID.equals(entity.getUserId())) {
-             throw new EntryNotFoundException("Entry not found");
-        }
-
         entryMapper.updateEntity(request, entity);
         entryRepository.save(entity);
         return entryMapper.toDto(entity);
@@ -111,11 +85,6 @@ public class EntryService {
     public void deleteEntry(String entryId) {
         var entity = entryRepository.findById(entryId)
                 .orElseThrow(() -> new EntryNotFoundException("Entry not found"));
-
-        if (!CURRENT_USER_ID.equals(entity.getUserId())) {
-             throw new EntryNotFoundException("Entry not found");
-        }
-
-        entryRepository.deleteById(entryId);
+        entryRepository.delete(entity);
     }
 }
