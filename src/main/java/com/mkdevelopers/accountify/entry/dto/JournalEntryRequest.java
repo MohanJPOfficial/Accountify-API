@@ -6,14 +6,13 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
-public class CreateEntryRequest {
+public class JournalEntryRequest {
 
     @NotBlank(message = "Entry id is required")
     private String entryId;
 
+    @NotBlank(message = "Journal id is required")
     private String journalId;
-
-    private String ledgerId;
 
     @NotBlank(message = "Date is required")
     private String date;

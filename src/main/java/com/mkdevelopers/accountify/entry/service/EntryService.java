@@ -1,14 +1,17 @@
 package com.mkdevelopers.accountify.entry.service;
 
-import com.mkdevelopers.accountify.entry.dto.CreateEntryRequest;
 import com.mkdevelopers.accountify.entry.dto.EntryDto;
-import com.mkdevelopers.accountify.entry.dto.UpdateEntryRequest;
+import com.mkdevelopers.accountify.entry.dto.JournalEntryRequest;
+import com.mkdevelopers.accountify.entry.dto.LedgerEntryRequest;
+import com.mkdevelopers.accountify.entry.dto.UpdateJournalEntryRequest;
+import com.mkdevelopers.accountify.entry.dto.UpdateLedgerEntryRequest;
 import com.mkdevelopers.accountify.entry.exception.DuplicateEntryException;
 import com.mkdevelopers.accountify.entry.exception.EntryNotFoundException;
 import com.mkdevelopers.accountify.entry.mapper.EntryMapper;
 import com.mkdevelopers.accountify.entry.repository.EntryRepository;
 import com.mkdevelopers.accountify.journal.exception.JournalNotFoundException;
 import com.mkdevelopers.accountify.journal.repository.JournalRepository;
+import com.mkdevelopers.accountify.ledger.enums.LedgerParticular;
 import com.mkdevelopers.accountify.ledger.exception.LedgerNotFoundException;
 import com.mkdevelopers.accountify.ledger.repository.LedgerRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,31 +30,41 @@ public class EntryService {
     private final JournalRepository journalRepository;
     private final LedgerRepository ledgerRepository;
 
-    public EntryDto createEntry(CreateEntryRequest request) {
+    public EntryDto createJournalEntry(JournalEntryRequest request) {
         if (entryRepository.existsById(request.getEntryId())) {
             throw new DuplicateEntryException("Entry with the given ID already exists.");
         }
 
-        if (request.getJournalId() != null && request.getLedgerId() != null) {
-            throw new IllegalArgumentException("Entry cannot belong to both Journal and Ledger at the same time.");
-        }
-        if (request.getJournalId() == null && request.getLedgerId() == null) {
-            throw new IllegalArgumentException("Entry must belong to either Journal or Ledger.");
-        }
-
-        var entity = entryMapper.toEntity(request);
+        var entity = entryMapper.toJournalEntryEntity(request);
         entity.setUserId(CURRENT_USER_ID);
 
-        if (request.getJournalId() != null) {
-            var journal = journalRepository.findById(request.getJournalId())
-                    .orElseThrow(() -> new JournalNotFoundException("Journal not found"));
-            entity.setJournal(journal);
-        } else {
-            var ledger = ledgerRepository.findById(request.getLedgerId())
-                    .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
-            entity.setLedger(ledger);
+        var journal = journalRepository.findById(request.getJournalId())
+                .orElseThrow(() -> new JournalNotFoundException("Journal not found"));
+        entity.setJournal(journal);
+
+        entryRepository.save(entity);
+        return entryMapper.toDto(entity);
+    }
+
+    public EntryDto createLedgerEntry(LedgerEntryRequest request) {
+        if (entryRepository.existsById(request.getEntryId())) {
+            throw new DuplicateEntryException("Entry with the given ID already exists.");
         }
-        
+
+        var ledger = ledgerRepository.findById(request.getLedgerId())
+                .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
+
+        if (LedgerParticular.isInvalidParticular(ledger.getLedgerType(), request.getParticular())) {
+            var validParticulars = LedgerParticular.getValidParticulars(ledger.getLedgerType());
+            throw new IllegalArgumentException(
+                    "Invalid particular '" + request.getParticular() + "' for " + ledger.getLedgerType()
+                            + " ledger. Valid particulars: " + validParticulars);
+        }
+
+        var entity = entryMapper.toLedgerEntryEntity(request);
+        entity.setUserId(CURRENT_USER_ID);
+        entity.setLedger(ledger);
+
         entryRepository.save(entity);
         return entryMapper.toDto(entity);
     }
@@ -74,10 +87,37 @@ public class EntryService {
         return entryRepository.findByLedger(ledger, pageable).map(entryMapper::toDto);
     }
 
-    public EntryDto updateEntry(String entryId, UpdateEntryRequest request) {
+    public EntryDto updateJournalEntry(String entryId, UpdateJournalEntryRequest request) {
         var entity = entryRepository.findById(entryId)
                 .orElseThrow(() -> new EntryNotFoundException("Entry not found"));
-        entryMapper.updateEntity(request, entity);
+
+        if (entity.getJournal() == null) {
+            throw new IllegalArgumentException("Cannot update a ledger entry as a journal entry");
+        }
+
+        entryMapper.updateJournalEntryEntity(request, entity);
+        entryRepository.save(entity);
+        return entryMapper.toDto(entity);
+    }
+
+    public EntryDto updateLedgerEntry(String entryId, UpdateLedgerEntryRequest request) {
+        var entity = entryRepository.findById(entryId)
+                .orElseThrow(() -> new EntryNotFoundException("Entry not found"));
+
+        var ledger = entity.getLedger();
+        if (ledger == null) {
+            throw new IllegalArgumentException("Cannot update a journal entry as a ledger entry");
+        }
+
+        if (request.getParticular() != null
+                && LedgerParticular.isInvalidParticular(ledger.getLedgerType(), request.getParticular())) {
+            var validParticulars = LedgerParticular.getValidParticulars(ledger.getLedgerType());
+            throw new IllegalArgumentException(
+                    "Invalid particular '" + request.getParticular() + "' for " + ledger.getLedgerType()
+                            + " ledger. Valid particulars: " + validParticulars);
+        }
+
+        entryMapper.updateLedgerEntryEntity(request, entity);
         entryRepository.save(entity);
         return entryMapper.toDto(entity);
     }

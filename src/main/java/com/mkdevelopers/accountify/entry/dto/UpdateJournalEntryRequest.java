@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
-public class UpdateEntryRequest {
+public class UpdateJournalEntryRequest {
 
     private String date;
     private String particular;

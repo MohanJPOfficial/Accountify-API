@@ -1,8 +1,10 @@
 package com.mkdevelopers.accountify.entry.controller;
 
-import com.mkdevelopers.accountify.entry.dto.CreateEntryRequest;
 import com.mkdevelopers.accountify.entry.dto.EntryDto;
-import com.mkdevelopers.accountify.entry.dto.UpdateEntryRequest;
+import com.mkdevelopers.accountify.entry.dto.JournalEntryRequest;
+import com.mkdevelopers.accountify.entry.dto.LedgerEntryRequest;
+import com.mkdevelopers.accountify.entry.dto.UpdateJournalEntryRequest;
+import com.mkdevelopers.accountify.entry.dto.UpdateLedgerEntryRequest;
 import com.mkdevelopers.accountify.entry.service.EntryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,26 +22,35 @@ class EntryController {
 
     private final EntryService entryService;
 
-    @GetMapping(params = "journalId")
+    @GetMapping("/journal/{journalId}")
     public Page<EntryDto> getEntriesByJournal(
-            @RequestParam String journalId,
+            @PathVariable String journalId,
             @PageableDefault(size = 20) Pageable pageable) {
         return entryService.getEntriesByJournal(journalId, pageable);
     }
 
-    @GetMapping(params = "ledgerId")
+    @GetMapping("/ledger/{ledgerId}")
     public Page<EntryDto> getEntriesByLedger(
-            @RequestParam String ledgerId,
+            @PathVariable String ledgerId,
             @PageableDefault(size = 20) Pageable pageable) {
         return entryService.getEntriesByLedger(ledgerId, pageable);
     }
 
-    @PostMapping
-    public ResponseEntity<EntryDto> createEntry(
-            @Valid @RequestBody CreateEntryRequest request,
+    @PostMapping("/journal")
+    public ResponseEntity<EntryDto> createJournalEntry(
+            @Valid @RequestBody JournalEntryRequest request,
             UriComponentsBuilder uriBuilder) {
-        var dto = entryService.createEntry(request);
-        var uri = uriBuilder.path("/entries/{id}").buildAndExpand(dto.entryId()).toUri();
+        var dto = entryService.createJournalEntry(request);
+        var uri = uriBuilder.replacePath("/entries/journal/{id}").buildAndExpand(dto.entryId()).toUri();
+        return ResponseEntity.created(uri).body(dto);
+    }
+
+    @PostMapping("/ledger")
+    public ResponseEntity<EntryDto> createLedgerEntry(
+            @Valid @RequestBody LedgerEntryRequest request,
+            UriComponentsBuilder uriBuilder) {
+        var dto = entryService.createLedgerEntry(request);
+        var uri = uriBuilder.replacePath("/entries/ledger/{id}").buildAndExpand(dto.entryId()).toUri();
         return ResponseEntity.created(uri).body(dto);
     }
 
@@ -48,11 +59,18 @@ class EntryController {
         return entryService.getEntryById(id);
     }
 
-    @PutMapping("/{id}")
-    public EntryDto updateEntry(
+    @PutMapping("/journal/{id}")
+    public EntryDto updateJournalEntry(
             @PathVariable String id,
-            @Valid @RequestBody UpdateEntryRequest request) {
-        return entryService.updateEntry(id, request);
+            @Valid @RequestBody UpdateJournalEntryRequest request) {
+        return entryService.updateJournalEntry(id, request);
+    }
+
+    @PutMapping("/ledger/{id}")
+    public EntryDto updateLedgerEntry(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateLedgerEntryRequest request) {
+        return entryService.updateLedgerEntry(id, request);
     }
 
     @DeleteMapping("/{id}")
