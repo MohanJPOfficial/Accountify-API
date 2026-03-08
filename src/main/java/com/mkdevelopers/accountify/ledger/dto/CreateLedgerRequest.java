@@ -15,7 +15,7 @@ public class CreateLedgerRequest {
     private String businessId;
 
     @NotBlank(message = "Ledger type is required")
-    @Pattern(regexp = "^(Purchase|Sales)$", message = "Ledger type must be either Purchase or Sales")
+    @Pattern(regexp = "^(PURCHASE|SALES)$", message = "Ledger type must be either Purchase or Sales")
     private String ledgerType;
 
     @NotBlank(message = "Business name is required")
