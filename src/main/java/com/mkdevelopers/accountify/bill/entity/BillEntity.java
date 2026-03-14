@@ -1,5 +1,6 @@
 package com.mkdevelopers.accountify.bill.entity;
 
+import com.mkdevelopers.accountify.billentry.entity.BillEntryEntity;
 import com.mkdevelopers.accountify.business.entity.BusinessEntity;
 import com.mkdevelopers.accountify.ledger.entity.LedgerEntity;
 import jakarta.persistence.*;
