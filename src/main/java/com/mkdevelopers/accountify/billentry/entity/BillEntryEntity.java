@@ -1,6 +1,7 @@
 package com.mkdevelopers.accountify.billentry.entity;
 
 import com.mkdevelopers.accountify.bill.entity.BillEntity;
+import com.mkdevelopers.accountify.billentry.constant.EntryType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,8 +34,9 @@ public class BillEntryEntity {
     @Column(name = "quantity")
     private Integer quantity;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "entry_type")
-    private String entryType;
+    private EntryType entryType;
 
     @Column(name = "return_date")
     private String returnDate;

@@ -2,8 +2,8 @@ package com.mkdevelopers.accountify.ledger.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Data;
+import com.mkdevelopers.accountify.ledger.enums.LedgerType;
 
 @Data
 public class CreateLedgerRequest {
@@ -14,9 +14,8 @@ public class CreateLedgerRequest {
     @NotBlank(message = "Business id is required")
     private String businessId;
 
-    @NotBlank(message = "Ledger type is required")
-    @Pattern(regexp = "^(PURCHASE|SALES)$", message = "Ledger type must be either Purchase or Sales")
-    private String ledgerType;
+    @NotNull(message = "Ledger type is required")
+    private LedgerType ledgerType;
 
     @NotBlank(message = "Business name is required")
     private String businessName;

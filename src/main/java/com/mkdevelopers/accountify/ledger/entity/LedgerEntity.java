@@ -3,6 +3,7 @@ package com.mkdevelopers.accountify.ledger.entity;
 import com.mkdevelopers.accountify.bill.entity.BillEntity;
 import com.mkdevelopers.accountify.business.entity.BusinessEntity;
 import com.mkdevelopers.accountify.entry.entity.EntryEntity;
+import com.mkdevelopers.accountify.ledger.enums.LedgerType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,8 +30,9 @@ public class LedgerEntity {
     @JoinColumn(name = "business_id")
     private BusinessEntity business;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "ledger_type")
-    private String ledgerType;
+    private LedgerType ledgerType;
 
     @Column(name = "business_name")
     private String businessName;

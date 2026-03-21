@@ -33,15 +33,15 @@ public enum LedgerParticular {
             TO_SALES.displayName,
             TO_CASH.displayName);
 
-    private static final Map<String, Set<String>> VALID_PARTICULARS = Map.of(
-            "PURCHASE", PURCHASE_PARTICULARS,
-            "SALES", SALES_PARTICULARS);
+    private static final Map<LedgerType, Set<String>> VALID_PARTICULARS = Map.of(
+            LedgerType.PURCHASE, PURCHASE_PARTICULARS,
+            LedgerType.SALES, SALES_PARTICULARS);
 
-    public static Set<String> getValidParticulars(String ledgerType) {
+    public static Set<String> getValidParticulars(LedgerType ledgerType) {
         return VALID_PARTICULARS.getOrDefault(ledgerType, Set.of());
     }
 
-    public static boolean isInvalidParticular(String ledgerType, String particular) {
+    public static boolean isInvalidParticular(LedgerType ledgerType, String particular) {
         return !getValidParticulars(ledgerType).contains(particular);
     }
 }
