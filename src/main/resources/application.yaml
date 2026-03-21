@@ -3,9 +3,9 @@ spring:
     name: Accountify
 
   datasource:
-    url: jdbc:mysql://localhost:3306/accountify?createDatabaseIfNotExist=true
-    username: root
-    password: ***REMOVED***
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     show-sql: true

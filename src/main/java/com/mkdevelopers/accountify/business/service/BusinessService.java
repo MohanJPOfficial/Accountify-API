@@ -14,12 +14,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @AllArgsConstructor
 @Service
+@Transactional
 public class BusinessService {
 
     /**
-     * Placeholder until auth is implemented. Ensure this user exists in DB (e.g. via migration or seed).
+     * Placeholder until auth is implemented. Ensure this user exists in DB (e.g.
+     * via migration or seed).
      */
     private static final String CURRENT_USER_ID = "uuid-007";
 
@@ -29,7 +33,8 @@ public class BusinessService {
 
     private UserEntity getCurrentUser() {
         return userRepository.findById(CURRENT_USER_ID)
-                .orElseThrow(() -> new IllegalStateException("Current user not found. Add user with id: " + CURRENT_USER_ID));
+                .orElseThrow(() -> new IllegalStateException(
+                        "Current user not found. Add user with id: " + CURRENT_USER_ID));
     }
 
     public BusinessDto createBusiness(CreateBusinessRequest businessRequest) {

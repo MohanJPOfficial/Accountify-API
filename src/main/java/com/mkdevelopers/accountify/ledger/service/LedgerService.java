@@ -14,8 +14,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class LedgerService {
 
     private static final String CURRENT_USER_ID = "uuid-007";
@@ -35,7 +38,7 @@ public class LedgerService {
         var entity = ledgerMapper.toEntity(request);
         entity.setUserId(CURRENT_USER_ID);
         entity.setBusiness(business);
-        
+
         ledgerRepository.save(entity);
         return ledgerMapper.toDto(entity);
     }
