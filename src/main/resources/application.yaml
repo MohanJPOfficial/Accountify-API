@@ -11,3 +11,8 @@ spring:
     show-sql: true
 
 websiteUrl: http://localhost:8080
+springdoc:
+  swagger-ui:
+    syntax-highlight:
+      theme: obsidian
+
