@@ -59,7 +59,7 @@ public class BillEntity {
     private String stateCode;
 
     @Column(name = "timestamp")
-    private String timestamp;
+    private Long timestamp;
 
     @OneToMany(mappedBy = "bill")
     private Set<BillEntryEntity> billEntries = new LinkedHashSet<>();

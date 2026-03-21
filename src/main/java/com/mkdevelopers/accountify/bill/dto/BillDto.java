@@ -14,5 +14,5 @@ public record BillDto(
         Double taxRate,
         String taxType,
         String stateCode,
-        String timestamp) implements Serializable {
+        Long timestamp) implements Serializable {
 }
