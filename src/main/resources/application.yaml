@@ -16,8 +16,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://securetoken.google.com/***REMOVED***
-          audiences: ***REMOVED***
+          issuer-uri: https://securetoken.google.com/${FIREBASE_PROJECT_ID:your-firebase-project-id}
+          audiences: ${FIREBASE_PROJECT_ID:your-firebase-project-id}
 
 websiteUrl: http://localhost:8080
 springdoc:
