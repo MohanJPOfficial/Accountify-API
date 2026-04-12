@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import com.mkdevelopers.accountify.common.utils.SecurityUtils;
 
 @AllArgsConstructor
 @Service
@@ -25,16 +26,16 @@ public class BusinessService {
      * Placeholder until auth is implemented. Ensure this user exists in DB (e.g.
      * via migration or seed).
      */
-    private static final String CURRENT_USER_ID = "uuid-007";
+    // Removed hardcoded uuid-007
 
     private final BusinessRepository businessRepository;
     private final BusinessMapper businessMapper;
     private final UserRepository userRepository;
 
     private UserEntity getCurrentUser() {
-        return userRepository.findById(CURRENT_USER_ID)
+        return userRepository.findById(SecurityUtils.getCurrentUserId())
                 .orElseThrow(() -> new IllegalStateException(
-                        "Current user not found. Add user with id: " + CURRENT_USER_ID));
+                        "Current user not found. Add user with id: " + SecurityUtils.getCurrentUserId()));
     }
 
     public BusinessDto createBusiness(CreateBusinessRequest businessRequest) {

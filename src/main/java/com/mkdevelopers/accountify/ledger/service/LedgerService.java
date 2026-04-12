@@ -15,13 +15,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import com.mkdevelopers.accountify.common.utils.SecurityUtils;
 
 @RequiredArgsConstructor
 @Service
 @Transactional
 public class LedgerService {
 
-    private static final String CURRENT_USER_ID = "uuid-007";
+    // Removed hardcoded uuid-007
 
     private final LedgerRepository ledgerRepository;
     private final LedgerMapper ledgerMapper;
@@ -36,7 +37,7 @@ public class LedgerService {
         }
 
         var entity = ledgerMapper.toEntity(request);
-        entity.setUserId(CURRENT_USER_ID);
+        entity.setUserId(SecurityUtils.getCurrentUserId());
         entity.setBusiness(business);
 
         ledgerRepository.save(entity);

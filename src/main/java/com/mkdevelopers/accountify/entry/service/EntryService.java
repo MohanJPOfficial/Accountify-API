@@ -20,13 +20,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import com.mkdevelopers.accountify.common.utils.SecurityUtils;
 
 @RequiredArgsConstructor
 @Service
 @Transactional
 public class EntryService {
 
-    private static final String CURRENT_USER_ID = "uuid-007";
+    // Removed hardcoded uuid-007
 
     private final EntryRepository entryRepository;
     private final EntryMapper entryMapper;
@@ -39,7 +40,7 @@ public class EntryService {
         }
 
         var entity = entryMapper.toJournalEntryEntity(request);
-        entity.setUserId(CURRENT_USER_ID);
+        entity.setUserId(SecurityUtils.getCurrentUserId());
 
         var journal = journalRepository.findById(request.getJournalId())
                 .orElseThrow(() -> new JournalNotFoundException("Journal not found"));
@@ -65,7 +66,7 @@ public class EntryService {
         }
 
         var entity = entryMapper.toLedgerEntryEntity(request);
-        entity.setUserId(CURRENT_USER_ID);
+        entity.setUserId(SecurityUtils.getCurrentUserId());
         entity.setLedger(ledger);
 
         entryRepository.save(entity);
