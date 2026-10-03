@@ -23,7 +23,11 @@ public class UserService {
     private UserEntity insertCurrentUser(String userId) {
         var user = new UserEntity();
         user.setUserId(userId);
-        user.setEmail(SecurityUtils.getClaim("email", userId + "@users.accountify.local"));
+        String email = SecurityUtils.getClaim("email", "");
+        if (email.isBlank()) {
+            throw new IllegalArgumentException("Email claim is required");
+        }
+        user.setEmail(email);
         user.setProfileName(SecurityUtils.getClaim("name", "User"));
         try {
             return userRepository.save(user);
