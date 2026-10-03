@@ -20,7 +20,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import com.mkdevelopers.accountify.common.utils.Ownership;
 import com.mkdevelopers.accountify.common.utils.SecurityUtils;
+import com.mkdevelopers.accountify.entry.entity.EntryEntity;
+import com.mkdevelopers.accountify.journal.entity.JournalEntity;
+import com.mkdevelopers.accountify.ledger.entity.LedgerEntity;
 
 @RequiredArgsConstructor
 @Service
@@ -44,6 +48,7 @@ public class EntryService {
 
         var journal = journalRepository.findById(request.getJournalId())
                 .orElseThrow(() -> new JournalNotFoundException("Journal not found"));
+        requireJournalOwner(journal);
         entity.setJournal(journal);
 
         entryRepository.save(entity);
@@ -57,6 +62,7 @@ public class EntryService {
 
         var ledger = ledgerRepository.findById(request.getLedgerId())
                 .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
+        requireLedgerOwner(ledger);
 
         if (LedgerParticular.isInvalidParticular(ledger.getLedgerType(), request.getParticular())) {
             var validParticulars = LedgerParticular.getValidParticulars(ledger.getLedgerType());
@@ -76,24 +82,28 @@ public class EntryService {
     public EntryDto getEntryById(String entryId) {
         var entity = entryRepository.findById(entryId)
                 .orElseThrow(() -> new EntryNotFoundException("Entry not found"));
+        requireOwner(entity);
         return entryMapper.toDto(entity);
     }
 
     public Page<EntryDto> getEntriesByJournal(String journalId, Pageable pageable) {
         var journal = journalRepository.findById(journalId)
                 .orElseThrow(() -> new JournalNotFoundException("Journal not found"));
+        requireJournalOwner(journal);
         return entryRepository.findByJournal(journal, pageable).map(entryMapper::toDto);
     }
 
     public Page<EntryDto> getEntriesByLedger(String ledgerId, Pageable pageable) {
         var ledger = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
+        requireLedgerOwner(ledger);
         return entryRepository.findByLedger(ledger, pageable).map(entryMapper::toDto);
     }
 
     public EntryDto updateJournalEntry(String entryId, UpdateJournalEntryRequest request) {
         var entity = entryRepository.findById(entryId)
                 .orElseThrow(() -> new EntryNotFoundException("Entry not found"));
+        requireOwner(entity);
 
         if (entity.getJournal() == null) {
             throw new IllegalArgumentException("Cannot update a ledger entry as a journal entry");
@@ -107,6 +117,7 @@ public class EntryService {
     public EntryDto updateLedgerEntry(String entryId, UpdateLedgerEntryRequest request) {
         var entity = entryRepository.findById(entryId)
                 .orElseThrow(() -> new EntryNotFoundException("Entry not found"));
+        requireOwner(entity);
 
         var ledger = entity.getLedger();
         if (ledger == null) {
@@ -129,6 +140,25 @@ public class EntryService {
     public void deleteEntry(String entryId) {
         var entity = entryRepository.findById(entryId)
                 .orElseThrow(() -> new EntryNotFoundException("Entry not found"));
+        requireOwner(entity);
         entryRepository.delete(entity);
+    }
+
+    private void requireOwner(EntryEntity entity) {
+        if (Ownership.denied(entity.getUserId())) {
+            throw new EntryNotFoundException("Entry not found");
+        }
+    }
+
+    private void requireJournalOwner(JournalEntity journal) {
+        if (Ownership.denied(journal.getUserId())) {
+            throw new JournalNotFoundException("Journal not found");
+        }
+    }
+
+    private void requireLedgerOwner(LedgerEntity ledger) {
+        if (Ownership.denied(ledger.getUserId())) {
+            throw new LedgerNotFoundException("Ledger not found");
+        }
     }
 }

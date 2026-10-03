@@ -9,12 +9,15 @@ import com.mkdevelopers.accountify.business.mapper.BusinessMapper;
 import com.mkdevelopers.accountify.business.repository.BusinessRepository;
 import com.mkdevelopers.accountify.user.entity.UserEntity;
 import com.mkdevelopers.accountify.user.repository.UserRepository;
+import com.mkdevelopers.accountify.user.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import com.mkdevelopers.accountify.business.entity.BusinessEntity;
+import com.mkdevelopers.accountify.common.utils.Ownership;
 import com.mkdevelopers.accountify.common.utils.SecurityUtils;
 
 @AllArgsConstructor
@@ -31,6 +34,7 @@ public class BusinessService {
     private final BusinessRepository businessRepository;
     private final BusinessMapper businessMapper;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     private UserEntity getCurrentUser() {
         return userRepository.findById(SecurityUtils.getCurrentUserId())
@@ -43,7 +47,7 @@ public class BusinessService {
             throw new DuplicateBusinessException("Business with the given ID already exists.");
         }
 
-        var user = getCurrentUser();
+        var user = userService.ensureCurrentUser();
         var businessEntity = businessMapper.toEntity(businessRequest);
         businessEntity.setUser(user);
         businessRepository.save(businessEntity);
@@ -54,6 +58,7 @@ public class BusinessService {
     public BusinessDto getBusinessById(String businessId) {
         var entity = businessRepository.findById(businessId)
                 .orElseThrow(() -> new BusinessNotFoundException("Business with the given ID does not exist."));
+        requireOwner(entity);
         return businessMapper.toDto(entity);
     }
 
@@ -65,6 +70,7 @@ public class BusinessService {
     public BusinessDto updateBusiness(String businessId, UpdateBusinessRequest businessRequest) {
         var businessEntity = businessRepository.findById(businessId)
                 .orElseThrow(() -> new BusinessNotFoundException("Business with the given ID does not exist."));
+        requireOwner(businessEntity);
 
         businessMapper.updateEntity(businessRequest, businessEntity);
         businessRepository.save(businessEntity);
@@ -73,9 +79,16 @@ public class BusinessService {
     }
 
     public void deleteBusiness(String businessId) {
-        if (!businessRepository.existsById(businessId)) {
+        var businessEntity = businessRepository.findById(businessId)
+                .orElseThrow(() -> new BusinessNotFoundException("Business with the given ID does not exist."));
+        requireOwner(businessEntity);
+        businessRepository.delete(businessEntity);
+    }
+
+    private void requireOwner(BusinessEntity entity) {
+        String ownerId = entity.getUser() == null ? null : entity.getUser().getUserId();
+        if (Ownership.denied(ownerId)) {
             throw new BusinessNotFoundException("Business with the given ID does not exist.");
         }
-        businessRepository.deleteById(businessId);
     }
 }

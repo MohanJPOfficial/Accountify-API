@@ -15,7 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import com.mkdevelopers.accountify.business.entity.BusinessEntity;
+import com.mkdevelopers.accountify.common.utils.Ownership;
 import com.mkdevelopers.accountify.common.utils.SecurityUtils;
+import com.mkdevelopers.accountify.journal.entity.JournalEntity;
 
 @RequiredArgsConstructor
 @Service
@@ -35,6 +38,7 @@ public class JournalService {
 
         var business = businessRepository.findById(request.getBusinessId())
                 .orElseThrow(() -> new BusinessNotFoundException("Business with the given ID does not exist."));
+        requireBusinessOwner(business);
 
         var entity = journalMapper.toEntity(request);
         entity.setBusiness(business);
@@ -47,18 +51,21 @@ public class JournalService {
     public JournalDto getJournalById(String journalId) {
         var entity = journalRepository.findById(journalId)
                 .orElseThrow(() -> new JournalNotFoundException("Journal with the given ID does not exist."));
+        requireOwner(entity);
         return journalMapper.toDto(entity);
     }
 
     public Page<JournalDto> getJournalsByBusiness(String businessId, Pageable pageable) {
         var business = businessRepository.findById(businessId)
                 .orElseThrow(() -> new BusinessNotFoundException("Business with the given ID does not exist."));
+        requireBusinessOwner(business);
         return journalRepository.findByBusiness(business, pageable).map(journalMapper::toDto);
     }
 
     public JournalDto updateJournal(String journalId, UpdateJournalRequest request) {
         var entity = journalRepository.findById(journalId)
                 .orElseThrow(() -> new JournalNotFoundException("Journal with the given ID does not exist."));
+        requireOwner(entity);
         journalMapper.updateEntity(request, entity);
         journalRepository.save(entity);
 
@@ -68,6 +75,20 @@ public class JournalService {
     public void deleteJournal(String journalId) {
         var entity = journalRepository.findById(journalId)
                 .orElseThrow(() -> new JournalNotFoundException("Journal with the given ID does not exist."));
+        requireOwner(entity);
         journalRepository.delete(entity);
+    }
+
+    private void requireOwner(JournalEntity entity) {
+        if (Ownership.denied(entity.getUserId())) {
+            throw new JournalNotFoundException("Journal with the given ID does not exist.");
+        }
+    }
+
+    private void requireBusinessOwner(BusinessEntity business) {
+        String ownerId = business.getUser() == null ? null : business.getUser().getUserId();
+        if (Ownership.denied(ownerId)) {
+            throw new BusinessNotFoundException("Business with the given ID does not exist.");
+        }
     }
 }

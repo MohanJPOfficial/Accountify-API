@@ -15,7 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import com.mkdevelopers.accountify.business.entity.BusinessEntity;
+import com.mkdevelopers.accountify.common.utils.Ownership;
 import com.mkdevelopers.accountify.common.utils.SecurityUtils;
+import com.mkdevelopers.accountify.ledger.entity.LedgerEntity;
 
 @RequiredArgsConstructor
 @Service
@@ -31,6 +34,7 @@ public class LedgerService {
     public LedgerDto createLedger(CreateLedgerRequest request) {
         var business = businessRepository.findById(request.getBusinessId())
                 .orElseThrow(() -> new BusinessNotFoundException("Business not found"));
+        requireBusinessOwner(business);
 
         if (ledgerRepository.existsById(request.getLedgerId())) {
             throw new DuplicateLedgerException("Ledger with the given ID already exists.");
@@ -47,6 +51,7 @@ public class LedgerService {
     public LedgerDto getLedgerById(String ledgerId) {
         var entity = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
+        requireOwner(entity);
 
         return ledgerMapper.toDto(entity);
     }
@@ -54,6 +59,7 @@ public class LedgerService {
     public Page<LedgerDto> getLedgersByBusiness(String businessId, Pageable pageable) {
         var business = businessRepository.findById(businessId)
                 .orElseThrow(() -> new BusinessNotFoundException("Business not found"));
+        requireBusinessOwner(business);
 
         return ledgerRepository.findByBusiness(business, pageable).map(ledgerMapper::toDto);
     }
@@ -61,6 +67,7 @@ public class LedgerService {
     public LedgerDto updateLedger(String ledgerId, UpdateLedgerRequest request) {
         var entity = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
+        requireOwner(entity);
 
         ledgerMapper.updateEntity(request, entity);
         ledgerRepository.save(entity);
@@ -70,6 +77,20 @@ public class LedgerService {
     public void deleteLedger(String ledgerId) {
         var entity = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
+        requireOwner(entity);
         ledgerRepository.delete(entity);
+    }
+
+    private void requireOwner(LedgerEntity entity) {
+        if (Ownership.denied(entity.getUserId())) {
+            throw new LedgerNotFoundException("Ledger not found");
+        }
+    }
+
+    private void requireBusinessOwner(BusinessEntity business) {
+        String ownerId = business.getUser() == null ? null : business.getUser().getUserId();
+        if (Ownership.denied(ownerId)) {
+            throw new BusinessNotFoundException("Business not found");
+        }
     }
 }
