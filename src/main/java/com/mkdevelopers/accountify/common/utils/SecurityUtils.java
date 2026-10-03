@@ -14,7 +14,13 @@ public final class SecurityUtils {
      * from the current request's JWT token.
      */
     public static String getCurrentUserId() {
-        return currentAuthentication().getName();
+        Authentication authentication = currentAuthentication();
+        if (!(authentication.getPrincipal() instanceof Jwt jwt)
+                || jwt.getSubject() == null
+                || jwt.getSubject().isBlank()) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+        return jwt.getSubject();
     }
 
     /**
