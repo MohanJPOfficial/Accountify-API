@@ -7,7 +7,6 @@ import com.mkdevelopers.accountify.business.exception.BusinessNotFoundException;
 import com.mkdevelopers.accountify.business.exception.DuplicateBusinessException;
 import com.mkdevelopers.accountify.business.mapper.BusinessMapper;
 import com.mkdevelopers.accountify.business.repository.BusinessRepository;
-import com.mkdevelopers.accountify.user.entity.UserEntity;
 import com.mkdevelopers.accountify.user.repository.UserRepository;
 import com.mkdevelopers.accountify.user.service.UserService;
 import lombok.AllArgsConstructor;
@@ -25,22 +24,10 @@ import com.mkdevelopers.accountify.common.utils.SecurityUtils;
 @Transactional
 public class BusinessService {
 
-    /**
-     * Placeholder until auth is implemented. Ensure this user exists in DB (e.g.
-     * via migration or seed).
-     */
-    // Removed hardcoded uuid-007
-
     private final BusinessRepository businessRepository;
     private final BusinessMapper businessMapper;
     private final UserRepository userRepository;
     private final UserService userService;
-
-    private UserEntity getCurrentUser() {
-        return userRepository.findById(SecurityUtils.getCurrentUserId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Current user not found. Add user with id: " + SecurityUtils.getCurrentUserId()));
-    }
 
     public BusinessDto createBusiness(CreateBusinessRequest businessRequest) {
         if (businessRepository.existsById(businessRequest.getBusinessId())) {
@@ -63,8 +50,9 @@ public class BusinessService {
     }
 
     public Page<BusinessDto> getAllBusinesses(Pageable pageable) {
-        var user = getCurrentUser();
-        return businessRepository.findByUser(user, pageable).map(businessMapper::toDto);
+        return userRepository.findById(SecurityUtils.getCurrentUserId())
+                .map(user -> businessRepository.findByUser(user, pageable).map(businessMapper::toDto))
+                .orElseGet(() -> Page.empty(pageable));
     }
 
     public BusinessDto updateBusiness(String businessId, UpdateBusinessRequest businessRequest) {
