@@ -3,6 +3,7 @@ package com.mkdevelopers.accountify.entry.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 @Data
@@ -25,6 +26,7 @@ public class JournalEntryRequest {
     private String particularType;
 
     @NotNull(message = "Transaction value is required")
+    @Positive(message = "Transaction value must be greater than zero")
     private Long transactionValue;
 
     @NotNull(message = "Timestamp is required")
