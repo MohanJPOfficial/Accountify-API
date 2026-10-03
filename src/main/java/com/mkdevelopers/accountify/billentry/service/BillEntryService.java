@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
 import com.mkdevelopers.accountify.bill.entity.BillEntity;
+import com.mkdevelopers.accountify.billentry.constant.EntryType;
 import com.mkdevelopers.accountify.billentry.entity.BillEntryEntity;
 import com.mkdevelopers.accountify.common.utils.Ownership;
 import com.mkdevelopers.accountify.common.utils.SecurityUtils;
@@ -43,6 +44,7 @@ public class BillEntryService {
         var entity = billEntryMapper.toEntity(request);
         entity.setUserId(SecurityUtils.getCurrentUserId());
         entity.setBill(bill);
+        requireReturnDate(entity, false);
 
         billEntryRepository.save(entity);
         return billEntryMapper.toDto(entity);
@@ -67,6 +69,7 @@ public class BillEntryService {
                 .orElseThrow(() -> new BillEntryNotFoundException("Bill entry not found"));
         requireOwner(entity);
         billEntryMapper.updateEntity(request, entity);
+        requireReturnDate(entity, true);
         billEntryRepository.save(entity);
         return billEntryMapper.toDto(entity);
     }
@@ -87,6 +90,20 @@ public class BillEntryService {
     private void requireBillOwner(BillEntity bill) {
         if (Ownership.denied(bill.getUserId())) {
             throw new BillNotFoundException("Bill not found");
+        }
+    }
+
+    private void requireReturnDate(BillEntryEntity entity, boolean clearNonReturn) {
+        boolean isReturn = entity.getEntryType() == EntryType.SALES_RETURN
+                || entity.getEntryType() == EntryType.PURCHASE_RETURN;
+        boolean hasDate = entity.getReturnDate() != null && !entity.getReturnDate().isBlank();
+        if (isReturn && !hasDate) {
+            throw new IllegalArgumentException("Return date is required for a return entry");
+        }
+        if (!isReturn && clearNonReturn) {
+            entity.setReturnDate(null);
+        } else if (!isReturn && hasDate) {
+            throw new IllegalArgumentException("Return date is only allowed for a return entry");
         }
     }
 }

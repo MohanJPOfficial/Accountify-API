@@ -24,7 +24,9 @@ import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
@@ -92,5 +94,79 @@ class BillEntryServiceTest {
 
         assertEquals(dto, billEntryService.getBillEntryById("be1"));
         assertEquals(dto, billEntryService.updateBillEntry("be1", new UpdateBillEntryRequest()));
+    }
+
+    @Test
+    void createReturnRequiresReturnDate() {
+        var request = new CreateBillEntryRequest();
+        request.setBillEntryId("be1");
+        request.setBillId("bill1");
+        var entity = new BillEntryEntity();
+        entity.setEntryType(EntryType.SALES_RETURN);
+        entity.setReturnDate(" ");
+
+        when(billEntryRepository.existsById("be1")).thenReturn(false);
+        when(billRepository.findById("bill1")).thenReturn(Optional.of(ownedBill()));
+        when(billEntryMapper.toEntity(request)).thenReturn(entity);
+
+        var error = assertThrows(IllegalArgumentException.class, () -> billEntryService.createBillEntry(request));
+        assertEquals("Return date is required for a return entry", error.getMessage());
+    }
+
+    @Test
+    void createSaleRejectsReturnDate() {
+        var request = new CreateBillEntryRequest();
+        request.setBillEntryId("be1");
+        request.setBillId("bill1");
+        var entity = new BillEntryEntity();
+        entity.setEntryType(EntryType.SALES);
+        entity.setReturnDate("2026-01-01");
+
+        when(billEntryRepository.existsById("be1")).thenReturn(false);
+        when(billRepository.findById("bill1")).thenReturn(Optional.of(ownedBill()));
+        when(billEntryMapper.toEntity(request)).thenReturn(entity);
+
+        var error = assertThrows(IllegalArgumentException.class, () -> billEntryService.createBillEntry(request));
+        assertEquals("Return date is only allowed for a return entry", error.getMessage());
+    }
+
+    @Test
+    void updateReturnRequiresStoredDate() {
+        var billEntry = new BillEntryEntity();
+        billEntry.setUserId("user-a");
+        billEntry.setEntryType(EntryType.SALES_RETURN);
+        billEntry.setReturnDate(" ");
+        when(billEntryRepository.findById("be1")).thenReturn(Optional.of(billEntry));
+
+        var error = assertThrows(IllegalArgumentException.class,
+                () -> billEntryService.updateBillEntry("be1", new UpdateBillEntryRequest()));
+        assertEquals("Return date is required for a return entry", error.getMessage());
+    }
+
+    @Test
+    void updateAwayFromReturnClearsReturnDate() {
+        var billEntry = new BillEntryEntity();
+        billEntry.setUserId("user-a");
+        billEntry.setEntryType(EntryType.SALES_RETURN);
+        billEntry.setReturnDate("2026-01-01");
+        var request = new UpdateBillEntryRequest();
+        request.setEntryType(EntryType.SALES);
+        var dto = new BillEntryDto("be1", "bill1", "Rice", 100L, 1, EntryType.SALES, null, 1L);
+
+        when(billEntryRepository.findById("be1")).thenReturn(Optional.of(billEntry));
+        doAnswer(invocation -> {
+            invocation.getArgument(1, BillEntryEntity.class).setEntryType(EntryType.SALES);
+            return null;
+        }).when(billEntryMapper).updateEntity(request, billEntry);
+        when(billEntryMapper.toDto(billEntry)).thenReturn(dto);
+
+        assertEquals(dto, billEntryService.updateBillEntry("be1", request));
+        assertNull(billEntry.getReturnDate());
+    }
+
+    private static BillEntity ownedBill() {
+        var bill = new BillEntity();
+        bill.setUserId("user-a");
+        return bill;
     }
 }
