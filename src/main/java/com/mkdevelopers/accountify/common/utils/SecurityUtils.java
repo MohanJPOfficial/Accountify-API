@@ -4,7 +4,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-public class SecurityUtils {
+public final class SecurityUtils {
+
+    private SecurityUtils() {
+    }
 
     /**
      * Extracts the securely cryptographically verified user ID (Firebase UID)

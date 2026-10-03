@@ -41,8 +41,8 @@ public class BillService {
             throw new DuplicateBillException("Bill with the given ID already exists.");
         }
 
-        boolean hasBusiness = request.getBusinessId() != null;
-        boolean hasLedger = request.getLedgerId() != null;
+        boolean hasBusiness = request.getBusinessId() != null && !request.getBusinessId().isBlank();
+        boolean hasLedger = request.getLedgerId() != null && !request.getLedgerId().isBlank();
         if (hasBusiness == hasLedger) {
             throw new IllegalArgumentException(
                     hasBusiness

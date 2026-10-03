@@ -5,6 +5,7 @@ import com.mkdevelopers.accountify.business.exception.BusinessNotFoundException;
 import com.mkdevelopers.accountify.business.repository.BusinessRepository;
 import com.mkdevelopers.accountify.common.utils.SecurityUtils;
 import com.mkdevelopers.accountify.journal.dto.CreateJournalRequest;
+import com.mkdevelopers.accountify.journal.dto.JournalDto;
 import com.mkdevelopers.accountify.journal.dto.UpdateJournalRequest;
 import com.mkdevelopers.accountify.journal.entity.JournalEntity;
 import com.mkdevelopers.accountify.journal.exception.JournalNotFoundException;
@@ -21,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -76,5 +78,17 @@ class JournalServiceTest {
         when(businessRepository.findById("b1")).thenReturn(Optional.of(business));
 
         assertThrows(BusinessNotFoundException.class, () -> journalService.createJournal(request));
+    }
+
+    @Test
+    void ownerCanGetAndUpdateJournal() {
+        var journal = new JournalEntity();
+        journal.setUserId("user-a");
+        var dto = new JournalDto("j1", "Cash", "b1", 1L);
+        when(journalRepository.findById("j1")).thenReturn(Optional.of(journal));
+        when(journalMapper.toDto(journal)).thenReturn(dto);
+
+        assertEquals(dto, journalService.getJournalById("j1"));
+        assertEquals(dto, journalService.updateJournal("j1", new UpdateJournalRequest()));
     }
 }

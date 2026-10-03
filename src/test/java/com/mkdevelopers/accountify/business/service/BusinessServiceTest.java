@@ -19,11 +19,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -96,5 +98,28 @@ class BusinessServiceTest {
         assertEquals("a@example.com", savedUser.getValue().getEmail());
         assertEquals("Ada", savedUser.getValue().getProfileName());
         assertEquals(savedUser.getValue(), entity.getUser());
+    }
+
+    @Test
+    void ownerCanGetAndUpdateBusiness() {
+        var owner = new UserEntity();
+        owner.setUserId("user-a");
+        var business = new BusinessEntity();
+        business.setUser(owner);
+        var dto = new BusinessDto("b1", "Shop", null, "City", 1L);
+        when(businessRepository.findById("b1")).thenReturn(Optional.of(business));
+        when(businessMapper.toDto(business)).thenReturn(dto);
+
+        assertEquals(dto, businessService.getBusinessById("b1"));
+        assertEquals(dto, businessService.updateBusiness("b1", new UpdateBusinessRequest()));
+    }
+
+    @Test
+    void listIsEmptyWhenUserMissing() {
+        when(userRepository.findById("user-a")).thenReturn(Optional.empty());
+
+        var page = businessService.getAllBusinesses(PageRequest.of(0, 20));
+
+        assertTrue(page.isEmpty());
     }
 }
