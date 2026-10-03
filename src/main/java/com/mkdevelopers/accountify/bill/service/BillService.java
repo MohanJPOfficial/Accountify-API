@@ -18,7 +18,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import com.mkdevelopers.accountify.bill.entity.BillEntity;
+import com.mkdevelopers.accountify.business.entity.BusinessEntity;
+import com.mkdevelopers.accountify.common.utils.Ownership;
 import com.mkdevelopers.accountify.common.utils.SecurityUtils;
+import com.mkdevelopers.accountify.ledger.entity.LedgerEntity;
 
 @RequiredArgsConstructor
 @Service
@@ -37,22 +41,29 @@ public class BillService {
             throw new DuplicateBillException("Bill with the given ID already exists.");
         }
 
-        if (request.getBusinessId() == null && request.getLedgerId() == null) {
-            throw new IllegalArgumentException("Either businessId or ledgerId must be provided");
+        boolean hasBusiness = request.getBusinessId() != null;
+        boolean hasLedger = request.getLedgerId() != null;
+        if (hasBusiness == hasLedger) {
+            throw new IllegalArgumentException(
+                    hasBusiness
+                            ? "Provide either businessId or ledgerId, not both"
+                            : "Either businessId or ledgerId must be provided");
         }
 
         var entity = billMapper.toEntity(request);
         entity.setUserId(SecurityUtils.getCurrentUserId());
 
-        if (request.getBusinessId() != null) {
+        if (hasBusiness) {
             var business = businessRepository.findById(request.getBusinessId())
                     .orElseThrow(() -> new BusinessNotFoundException("Business not found"));
+            requireBusinessOwner(business);
             entity.setBusiness(business);
         }
 
-        if (request.getLedgerId() != null) {
+        if (hasLedger) {
             var ledger = ledgerRepository.findById(request.getLedgerId())
                     .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
+            requireLedgerOwner(ledger);
             entity.setLedger(ledger);
         }
 
@@ -63,24 +74,28 @@ public class BillService {
     public BillDto getBillById(String billId) {
         var entity = billRepository.findById(billId)
                 .orElseThrow(() -> new BillNotFoundException("Bill not found"));
+        requireOwner(entity);
         return billMapper.toDto(entity);
     }
 
     public Page<BillDto> getBillsByBusiness(String businessId, Pageable pageable) {
         var business = businessRepository.findById(businessId)
                 .orElseThrow(() -> new BusinessNotFoundException("Business not found"));
+        requireBusinessOwner(business);
         return billRepository.findByBusiness(business, pageable).map(billMapper::toDto);
     }
 
     public Page<BillDto> getBillsByLedger(String ledgerId, Pageable pageable) {
         var ledger = ledgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new LedgerNotFoundException("Ledger not found"));
+        requireLedgerOwner(ledger);
         return billRepository.findByLedger(ledger, pageable).map(billMapper::toDto);
     }
 
     public BillDto updateBill(String billId, UpdateBillRequest request) {
         var entity = billRepository.findById(billId)
                 .orElseThrow(() -> new BillNotFoundException("Bill not found"));
+        requireOwner(entity);
         billMapper.updateEntity(request, entity);
         billRepository.save(entity);
         return billMapper.toDto(entity);
@@ -89,6 +104,7 @@ public class BillService {
     public BillDto updateBillTax(String billId, UpdateBillTaxRequest request) {
         var entity = billRepository.findById(billId)
                 .orElseThrow(() -> new BillNotFoundException("Bill not found"));
+        requireOwner(entity);
         billMapper.updateTaxEntity(request, entity);
         billRepository.save(entity);
         return billMapper.toDto(entity);
@@ -97,6 +113,26 @@ public class BillService {
     public void deleteBill(String billId) {
         var entity = billRepository.findById(billId)
                 .orElseThrow(() -> new BillNotFoundException("Bill not found"));
+        requireOwner(entity);
         billRepository.delete(entity);
+    }
+
+    private void requireOwner(BillEntity entity) {
+        if (Ownership.denied(entity.getUserId())) {
+            throw new BillNotFoundException("Bill not found");
+        }
+    }
+
+    private void requireBusinessOwner(BusinessEntity business) {
+        String ownerId = business.getUser() == null ? null : business.getUser().getUserId();
+        if (Ownership.denied(ownerId)) {
+            throw new BusinessNotFoundException("Business not found");
+        }
+    }
+
+    private void requireLedgerOwner(LedgerEntity ledger) {
+        if (Ownership.denied(ledger.getUserId())) {
+            throw new LedgerNotFoundException("Ledger not found");
+        }
     }
 }

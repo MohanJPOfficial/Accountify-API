@@ -15,6 +15,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
+import com.mkdevelopers.accountify.bill.entity.BillEntity;
+import com.mkdevelopers.accountify.billentry.entity.BillEntryEntity;
+import com.mkdevelopers.accountify.common.utils.Ownership;
 import com.mkdevelopers.accountify.common.utils.SecurityUtils;
 
 @RequiredArgsConstructor
@@ -35,6 +38,7 @@ public class BillEntryService {
 
         var bill = billRepository.findById(request.getBillId())
                 .orElseThrow(() -> new BillNotFoundException("Bill not found"));
+        requireBillOwner(bill);
 
         var entity = billEntryMapper.toEntity(request);
         entity.setUserId(SecurityUtils.getCurrentUserId());
@@ -47,18 +51,21 @@ public class BillEntryService {
     public BillEntryDto getBillEntryById(String billEntryId) {
         var entity = billEntryRepository.findById(billEntryId)
                 .orElseThrow(() -> new BillEntryNotFoundException("Bill entry not found"));
+        requireOwner(entity);
         return billEntryMapper.toDto(entity);
     }
 
     public Page<BillEntryDto> getBillEntriesByBill(String billId, Pageable pageable) {
         var bill = billRepository.findById(billId)
                 .orElseThrow(() -> new BillNotFoundException("Bill not found"));
+        requireBillOwner(bill);
         return billEntryRepository.findByBill(bill, pageable).map(billEntryMapper::toDto);
     }
 
     public BillEntryDto updateBillEntry(String billEntryId, UpdateBillEntryRequest request) {
         var entity = billEntryRepository.findById(billEntryId)
                 .orElseThrow(() -> new BillEntryNotFoundException("Bill entry not found"));
+        requireOwner(entity);
         billEntryMapper.updateEntity(request, entity);
         billEntryRepository.save(entity);
         return billEntryMapper.toDto(entity);
@@ -67,6 +74,19 @@ public class BillEntryService {
     public void deleteBillEntry(String billEntryId) {
         var entity = billEntryRepository.findById(billEntryId)
                 .orElseThrow(() -> new BillEntryNotFoundException("Bill entry not found"));
+        requireOwner(entity);
         billEntryRepository.delete(entity);
+    }
+
+    private void requireOwner(BillEntryEntity entity) {
+        if (Ownership.denied(entity.getUserId())) {
+            throw new BillEntryNotFoundException("Bill entry not found");
+        }
+    }
+
+    private void requireBillOwner(BillEntity bill) {
+        if (Ownership.denied(bill.getUserId())) {
+            throw new BillNotFoundException("Bill not found");
+        }
     }
 }
