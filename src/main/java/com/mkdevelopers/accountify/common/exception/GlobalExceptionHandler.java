@@ -31,6 +31,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, String>> handleUnauthenticated(IllegalStateException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+    }
+
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(
             org.springframework.web.bind.MethodArgumentNotValidException ex) {

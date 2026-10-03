@@ -13,8 +13,11 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BusinessController.class)
@@ -33,6 +36,16 @@ class SecurityConfigTest {
                 .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(businessService);
+    }
+
+    @Test
+    void unauthenticatedUserIdReturns401() throws Exception {
+        when(businessService.getAllBusinesses(any()))
+                .thenThrow(new IllegalStateException("User is not authenticated"));
+
+        mockMvc.perform(get("/businesses").header("Authorization", "Bearer token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("User is not authenticated"));
     }
 
     @TestConfiguration
